@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: predict-ner-nel
+  namespace: mmenke
+  labels:
+    app: predict-ner-nel
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: predict-ner-nel
+  template:
+    metadata:
+      labels:
+        app: predict-ner-nel
+    spec:
+      containers:
+      - env:
+        - name: FLASK_ENV
+          value: local
+        - name: PORT
+          value: "5000"
+        - name: PATH_MODEL
+          value: "/data/biencoder/model/"
+        - name: PATH_KB
+          value: "/data/datasets/krohne_products_description_texoo.json"
+        - name: BERT_MODEL
+          value: "bert-base-german-dbmdz-uncased"
+        - name: INPUT_LENGTH
+          value: "50"
+        - name: BATCH_SIZE
+          value: "32"
+        image: registry.datexis.com/mmenke/predict-ner-nel:0.0.7
+        command: [ "/bin/sh", "-c" ]
+        args: ["cd .. && python biencoder/src/run.py" ]
+        name: predict-ner-nel
+        ports:
+          - name: client-port
+            containerPort: 5000
+        resources:
+          requests:
+            nvidia.com/gpu: 1
+            cpu: 1
+            memory: 10Gi
+          limits:
+            nvidia.com/gpu: 1
+            memory: 15Gi
+            cpu: 4
+        volumeMounts:
+        - mountPath: /data
+          name: krohne-data
+        - name: root-temp
+          mountPath: /root
+      restartPolicy: Always
+      nodeSelector:
+        gpu: p100
+      imagePullSecrets:
+        - name:  private-registry-auth
+      volumes:
+      - name: krohne-data
+        persistentVolumeClaim:
+          claimName: krohne-data
+      - name: root-temp
+        persistentVolumeClaim:
+          claimName: root-temp
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: predict-service
+  namespace: mmenke
+spec:
+  ports:
+  - name: "5000"
+    port: 5000
+    targetPort: 5000
+    protocol: TCP
+  selector:
+    app: predict-ner-nel
