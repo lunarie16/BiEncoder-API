@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: predict-ner-nel
+  name: predict-api
   namespace: mmenke
   labels:
-    app: predict-ner-nel
+    app: predict-api
 spec:
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: predict-ner-nel
+      app: predict-api
   template:
     metadata:
       labels:
-        app: predict-ner-nel
+        app: predict-api
     spec:
       containers:
       - env:
@@ -32,10 +32,12 @@ spec:
           value: "50"
         - name: BATCH_SIZE
           value: "32"
-        image: registry.datexis.com/mmenke/predict-ner-nel:0.0.7
+        - name: BIENCODER_MODEL
+          value: "train_default_nbs8-il50-bs58-lr0.0005361114500366287-wu100-ep125-uncased-7-cuda"
+        image: registry.datexis.com/mmenke/predict-ner-nel:0.0.28
         command: [ "/bin/sh", "-c" ]
         args: ["cd .. && python biencoder/src/run.py" ]
-        name: predict-ner-nel
+        name: predict-api
         ports:
           - name: client-port
             containerPort: 5000
@@ -55,7 +57,7 @@ spec:
           mountPath: /root
       restartPolicy: Always
       nodeSelector:
-        gpu: p100
+        gpu: v100
       imagePullSecrets:
         - name:  private-registry-auth
       volumes:
@@ -81,4 +83,4 @@ spec:
     targetPort: 5000
     protocol: TCP
   selector:
-    app: predict-ner-nel
+    app: predict-api

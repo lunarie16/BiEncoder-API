@@ -52,7 +52,6 @@ class NER:
         """
         self.device = device
         self.model_path = os.path.join(model_base_path, 'ner')
-        logger.error(f'this is the model path in __init__ {self.model_path}')
         flair.device = torch.device(device)
         try:
             self.ner: SequenceTagger = SequenceTagger.load(os.path.join(self.model_path, 'best-model.pt'))
@@ -67,6 +66,7 @@ class NER:
         """
         for doc in tqdm(dataset.documents, desc='Applying pre-trained NER model'):
             flair_doc = _teXooDocument2FlairBIOESSentence(doc)
+            logger.error(f'this is a flair BIOES senteces {flair_doc}')
             self.ner.predict(flair_doc)
             for entity in flair_doc.get_spans('BIOES'):
                 doc.annotations.append(MentionAnnotation(
@@ -76,3 +76,4 @@ class NER:
                     source='PRED',
                     confidence=entity.score
                 ))
+                logger.info(f'fount this entity {entity}: {entity.text}')

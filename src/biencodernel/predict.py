@@ -10,30 +10,31 @@ from biencodernel.utils import get_config_from_env, get_hp_information
 config = get_config_from_env()
 logger = logging.getLogger(__name__)
 
-
-def predict_ner_nel(dataset: dict, biencoder_model: str):
-    batch_size = int(get_hp_information(string=biencoder_model, substring='bs'))
-    input_length = int(get_hp_information(string=biencoder_model, substring='il'))
-    bert_model = 'bert-base-german-dbmdz-uncased' if 'uncased' in biencoder_model else 'bert-base-german-cased'
-    dataset = fromJson2Dataset(dataset)
-    kb_dataset = KBDataset(path_to_json=config['paths']['kb'], max_length=input_length,
-                           bert_model=bert_model)
-    kb_dl = DataLoader(dataset=kb_dataset, batch_size=batch_size, drop_last=False, pin_memory=True)
-    ner = NER(
+ner = NER(
         device=config['device'],
         model_base_path=config['paths']['model'],
     )
+
+
+def predict_ner_nel(dataset: dict, input_length: int, bert_model: str, batch_size: int, biencoder_model, kb_dl: DataLoader):
+    logger.info(f'start prediction')
+    dataset = fromJson2Dataset(dataset)
+
+    logger.info(f'predicting NER')
     ner.predict(dataset)
+    logger.error(f'\ndataset after NER \n {dataset.to_json()}\n\n')
     nel_ds = NELPredictDataset(dataset=dataset, max_length=input_length, allowed_ner_sources=['PRED'],
                                bert_model=bert_model)
+    logger.info(f'this is the NELPredictDataset getitem {nel_ds.__getitem__(0)}')
+    logger.info(f'this is the NELPredictDataset with ann ids {nel_ds.get_dataset_with_annotation_ids()}')
     nel_dl = DataLoader(dataset=nel_ds, batch_size=batch_size, drop_last=False, pin_memory=True)
-
     nel = BiEncoder.from_pretrained(
         model_path=os.path.join(config['paths']['model'], biencoder_model),
         tokenizer=nel_ds.tokenizer,
         device=config['device'],
         bert_model=bert_model
     )
+    logger.info(f'predicting NEL')
     nel.predict(prediction_dataloader=nel_dl, prediction_dataset=dataset, kb_dataloader=kb_dl)
     logger.info(f'this is the resulting dataset {dataset.to_json()}')
     return dataset.to_json()

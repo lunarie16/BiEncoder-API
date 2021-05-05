@@ -160,9 +160,12 @@ class NELPredictDataset(torch.utils.data.Dataset):
                     self.me_token,
                     doc_text[ann.begin + ann.length:]
                 )
+                logger.info(f'this is the mention_with_context {mention_with_context}')
                 tokens = self.tokenizer.tokenize(mention_with_context)
+                logger.info(f'now to tokens {tokens}')
                 tokens = TokenTools.center_mention(tokens=tokens, max_length=self.max_length, ms_token=self.ms_token,
                                                    me_token=self.me_token)
+                logger.info(f'after centering mention {tokens}')
                 token_ids = self.tokenizer.convert_tokens_to_ids(tokens)
                 token_ids = TokenTools.pad(token_ids, max_length=self.max_length)
                 self.tokenized_mentions.append(torch.tensor(token_ids))

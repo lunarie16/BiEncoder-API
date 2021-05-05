@@ -1,10 +1,10 @@
 from typing import Dict, List, Tuple
-
+import logging
 import faiss
 import numpy as np
 import torch
-from torch import nn
 
+logger = logging.getLogger(__name__)
 
 class FaissHNSWIndex:
     def __init__(self, vectors: Dict[str, torch.Tensor], m=32, efConstruction=40, efSearch=16, normalize: bool = True, omp_num_threads: int = 1):
@@ -50,7 +50,7 @@ class FaissHNSWIndex:
             idx_item = idx.item()
             if idx_item == -1:  # if k>number of vectors then it will begin returning -1 as idx
                 break
-            results.append((self.idx2id[idx_item], distance.item()))
+            results.append((self.idx2id[idx_item], abs(distance.item())))
         return results
 
     def __len__(self):
@@ -99,7 +99,7 @@ class FaissExactKNNIndex:
             idx_item = idx.item()
             if idx_item == -1:  # if k>number of vectors then it will begin returning -1 as idx
                 break
-            results.append((self.idx2id[idx_item], distance.item()))
+            results.append((self.idx2id[idx_item], 1-distance.item()))
         return results
 
     def __len__(self):
