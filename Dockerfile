@@ -8,7 +8,6 @@ WORKDIR /biencoder
 
 COPY src/biencodernel ./src/biencodernel/
 COPY src/*.py ./src/
-COPY tests/ ./tests/
 COPY requirements.txt .
 
 RUN pip install -r requirements.txt

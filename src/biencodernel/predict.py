@@ -6,6 +6,7 @@ import os
 import logging
 import copy
 from biencodernel.utils import get_config_from_env, get_hp_information
+import torch
 
 config = get_config_from_env()
 logger = logging.getLogger(__name__)
@@ -25,8 +26,6 @@ def predict_ner_nel(dataset: dict, input_length: int, bert_model: str, batch_siz
     logger.error(f'\ndataset after NER \n {dataset.to_json()}\n\n')
     nel_ds = NELPredictDataset(dataset=dataset, max_length=input_length, allowed_ner_sources=['PRED'],
                                bert_model=bert_model)
-    logger.info(f'this is the NELPredictDataset getitem {nel_ds.__getitem__(0)}')
-    logger.info(f'this is the NELPredictDataset with ann ids {nel_ds.get_dataset_with_annotation_ids()}')
     nel_dl = DataLoader(dataset=nel_ds, batch_size=batch_size, drop_last=False, pin_memory=True)
     nel = BiEncoder.from_pretrained(
         model_path=os.path.join(config['paths']['model'], biencoder_model),

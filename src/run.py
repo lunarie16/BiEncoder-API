@@ -4,7 +4,7 @@ import os
 from biencodernel.predict import predict_ner_nel
 from biencodernel.utils import get_config_from_env, get_hp_information
 from biencodernel.datasets import KBDataset, DataLoader, NELPredictDataset
-
+import json
 
 app = Flask(__name__)
 
@@ -17,14 +17,33 @@ config = get_config_from_env()
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    body = request.get_json()
-    if body:
-        dataset = body.get('dataset')
+    dataset = request.get_json()
+    if dataset:
         resulting_dataset = predict_ner_nel(dataset, input_length=input_length, batch_size=batch_size,
                                             bert_model=bert_model, kb_dl=kb_dl, biencoder_model=config['biencoder_model'])
-        Response(resulting_dataset, 200)
+        response = app.response_class(
+            response=resulting_dataset,
+            status=200,
+            mimetype='application/json'
+        )
+        return response
     else:
         abort(400)
+
+
+@app.route('/setmodel/<model_name>', methods=['POST'])
+def set_model(model_name: str):
+    if model_name:
+        config['biencoder_model'] = model_name
+        return Response(response=f'set biencoder_model to: {model_name}', status=200)
+    else:
+        abort(400)
+
+
+@app.route('/setmodel/default', methods=['POST'])
+def set_model_default():
+    config['biencoder_model'] = get_config_from_env()['biencoder_model']
+    return Response(response=f'set biencoder_model back to default: {config["biencoder_model"]}', status=200)
 
 
 if __name__ == '__main__':

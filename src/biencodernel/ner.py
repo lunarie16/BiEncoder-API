@@ -65,9 +65,11 @@ class NER:
         :return:
         """
         for doc in tqdm(dataset.documents, desc='Applying pre-trained NER model'):
-            flair_doc = _teXooDocument2FlairBIOESSentence(doc)
-            logger.error(f'this is a flair BIOES senteces {flair_doc}')
+            # flair_doc = _teXooDocument2FlairBIOESSentence(doc)
+            flair_doc = Sentence(doc.text)
+            logger.error(f'this is a flair BIOES sentence {flair_doc}')
             self.ner.predict(flair_doc)
+            logger.info(f'after prediction BIOES sentence {flair_doc}')
             for entity in flair_doc.get_spans('BIOES'):
                 doc.annotations.append(MentionAnnotation(
                     begin=entity.start_pos,

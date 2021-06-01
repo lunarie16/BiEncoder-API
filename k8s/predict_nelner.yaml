@@ -31,10 +31,10 @@ spec:
         - name: INPUT_LENGTH
           value: "50"
         - name: BATCH_SIZE
-          value: "32"
+          value: "82"
         - name: BIENCODER_MODEL
-          value: "train_default_nbs8-il50-bs58-lr0.0005361114500366287-wu100-ep125-uncased-7-cuda"
-        image: registry.datexis.com/mmenke/predict-ner-nel:0.0.28
+          value: "train_default_eval-nbs8-il50-bs82-lr9.157438840569144e-05-wu100-ep25-uncased-no_train-cuda"
+        image: registry.datexis.com/mmenke/predict-ner-nel:0.1.7
         command: [ "/bin/sh", "-c" ]
         args: ["cd .. && python biencoder/src/run.py" ]
         name: predict-api

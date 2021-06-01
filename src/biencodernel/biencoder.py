@@ -8,6 +8,7 @@ from tqdm import tqdm
 from transformers import BertTokenizer, get_linear_schedule_with_warmup, BertModel
 from texoopy import Dataset, MentionAnnotation, NamedEntityAnnotation
 from biencodernel.knn import FaissHNSWIndex, FaissExactKNNIndex
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,10 @@ class BiEncoder:
                 concept_ids, concept_tokens = batch_data
                 concept_tokens = concept_tokens.to(self.device)
                 concept_embeddings = self.encoder_concept(concept_tokens)
+                logger.info(f'concept tokens {concept_tokens} and min and max are {torch.min(concept_tokens)}, '
+                            f'{torch.max(concept_tokens)}')
+                logger.info(f'concept embeddings{concept_embeddings} and min and max are {torch.min(concept_embeddings)}'
+                            f', {torch.max(concept_embeddings)}')
                 for kb_id, concept_embedding in zip(concept_ids, concept_embeddings):
                     kb_embeddings_cache[kb_id] = concept_embedding.to('cpu')
 
@@ -106,12 +111,15 @@ class BiEncoder:
                                              total=len(prediction_dataloader)):
 
                 mention_tokens, annotation_ids = batch_data
+                logger.info(f' mention tokens \n {mention_tokens} \n\n annotation_ids \n{annotation_ids}')
                 mention_tokens = mention_tokens.to(self.device)
                 mention_embeddings = self.encoder_mention(mention_tokens)
+                logger.info(f'mention tokens to mention embeddings: {mention_embeddings}')
 
                 for mention_embedding, annotation_id in zip(mention_embeddings.to('cpu'), annotation_ids):
                     annotation_id = annotation_id.item()
                     knn_ids, distances = zip(*knn_index.get_knn_ids_for_vector(mention_embedding, k=2))
+                    logger.info(f'resulting distances: {distances}')
                     confidence = max(distances[1] - distances[0], 0)
                     predictions[annotation_id] = {'refId': knn_ids[0], 'confidence': confidence}
 
@@ -130,6 +138,9 @@ class BiEncoder:
                             confidence=ann.confidence + predictions[ann.uid]['confidence'],
                         ))
                         old_annotations.append(ann)
+                        if ann.confidence + predictions[ann.uid]['confidence'] > 1:
+                            logger.info(f'confidence greater than 1 because of sum {ann.confidence} and {predictions[ann.uid]["confidence"]},'
+                                    f'resulting in {ann.confidence + predictions[ann.uid]["confidence"]}confidence')
                 for ann in old_annotations:
                     doc.annotations.remove(ann)
                 doc.annotations += new_annotations
