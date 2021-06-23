@@ -18,12 +18,8 @@ ner = NER(
 
 
 def predict_ner_nel(dataset: dict, input_length: int, bert_model: str, batch_size: int, biencoder_model, kb_dl: DataLoader):
-    logger.info(f'start prediction')
     dataset = fromJson2Dataset(dataset)
-
-    logger.info(f'predicting NER')
     ner.predict(dataset)
-    logger.error(f'\ndataset after NER \n {dataset.to_json()}\n\n')
     nel_ds = NELPredictDataset(dataset=dataset, max_length=input_length, allowed_ner_sources=['PRED'],
                                bert_model=bert_model)
     nel_dl = DataLoader(dataset=nel_ds, batch_size=batch_size, drop_last=False, pin_memory=True)
@@ -33,9 +29,7 @@ def predict_ner_nel(dataset: dict, input_length: int, bert_model: str, batch_siz
         device=config['device'],
         bert_model=bert_model
     )
-    logger.info(f'predicting NEL')
     nel.predict(prediction_dataloader=nel_dl, prediction_dataset=dataset, kb_dataloader=kb_dl)
-    logger.info(f'this is the resulting dataset {dataset.to_json()}')
     return dataset.to_json()
 
 

@@ -42,7 +42,7 @@ def get_config_from_env() -> Dict[str, Any]:
               'biencoder_model': os.getenv('BIENCODER_MODEL', 'train_default_nbs8-il50-bs58-lr0.0005361114500366287-wu100-ep125-uncased-7-cuda'),
               'paths': {
                 'kb': os.getenv('PATH_KB', '/data/datasets/krohne_products_description_texoo.json'),
-                'model': os.getenv('PATH_MODEL', '//data/biencoder/model/')}}
+                'model': os.getenv('PATH_MODEL', '/data/biencoder/model/')}}
 
     logger.info('Using {}'.format(config['device']))
 

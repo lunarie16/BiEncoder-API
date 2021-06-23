@@ -64,7 +64,6 @@ class TokenTools:
         tokens_right = tokens[idx_me + 1:min(len(tokens), idx_me + 1 + max_context_length)]
         tokens_cropped = ['[CLS]'] + tokens_left + tokens_mention + tokens_right
         tokens_with_sep = tokens_cropped[:max_length - 1] + ['[SEP]']
-        logger.info(f'centered mention \n{tokens_with_sep}')
         return tokens_with_sep
 
     @staticmethod
@@ -93,17 +92,10 @@ class KBDataset(torch.utils.data.Dataset):
             kb_id = doc.id
             concept_name = doc.title
             concept_description = doc.text
-            concept_type = doc.type
             token_ids = self.tokenizer.encode(
-                '{} {} {} {}'.format(concept_name, self.ent_token, concept_type, concept_description),
+                '{} {} {}'.format(concept_name, self.ent_token, concept_description),
                 max_length=self.max_length, padding='max_length', truncation=True)
-            # token_ids = self.tokenizer.encode(
-            #     '{} {} {}'.format(concept_name, self.ent_token, concept_description),
-            #     max_length=self.max_length, padding='max_length', truncation=True)
-            logger.info(f'token ids after encoding \n{token_ids}, input length given with {self.max_length}, '
-                        f'resulting in len() {len(token_ids)}')
             token_ids_tensor = torch.tensor(token_ids)
-            logger.info(f'token ids tensor after encoding \n{token_ids_tensor}')
             self.tokenized_kb_concepts.append((kb_id, token_ids_tensor))
             self.tokenized_kb_concepts_by_kb_id[kb_id] = token_ids_tensor
 
@@ -169,18 +161,12 @@ class NELPredictDataset(torch.utils.data.Dataset):
                     self.me_token,
                     doc_text[ann.begin + ann.length:]
                 )
-                logger.info(f'this is the mention_with_context {mention_with_context}')
                 tokens = self.tokenizer.tokenize(mention_with_context)
-                logger.info(f'now to tokens {tokens}')
                 tokens = TokenTools.center_mention(tokens=tokens, max_length=self.max_length, ms_token=self.ms_token,
                                                    me_token=self.me_token)
-                logger.info(f'after centering mention {tokens}')
                 token_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-                logger.info(f'token_ids are {token_ids}')
                 token_ids = TokenTools.pad(token_ids, max_length=self.max_length)
-                logger.info(f'resulting with padding {token_ids}')
                 self.tokenized_mentions.append(torch.tensor(token_ids))
-                logger.info(f'to torch tensors {torch.tensor(token_ids)}')
                 self.annotation_ids.append(ann.uid)
 
     def get_dataset_with_annotation_ids(self):
