@@ -22,8 +22,8 @@ Config API in predict_nelner.yaml with values as:
 Input_length and Batch Size will be extracted from folder name as well
 
 
-##Route to predict: 
-_'/predict'_ and method: POST
+## Route to predict: 
+_localhost:5000/predict_ and method: POST
 
 creates a Flask Server where to send json body with Dataset in Texoo format to predict.
 json-body looks like:
